@@ -1,0 +1,20 @@
+{
+  "name": "zoom-meeting-timer",
+  "version": "1.0.0",
+  "description": "A Zoom App that tracks live meeting time from inside the Zoom client",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5",
+    "axios": "^1.7.2",
+    "cookie-session": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
