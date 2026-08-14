@@ -198,6 +198,44 @@
     }
   }
 
+  // ---- In-client OAuth (replaces the external-browser deep-link flow) ----
+  function randomString(len){
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const arr = new Uint8Array(len);
+    crypto.getRandomValues(arr);
+    let out = '';
+    for (let i = 0; i < len; i++) out += chars[arr[i] % chars.length];
+    return out;
+  }
+
+  async function initInClientAuth(){
+    // Zoom's in-client flow only supports PKCE method "plain", meaning
+    // the code_challenge and code_verifier are the same string.
+    const verifier = randomString(43);
+    const state = randomString(16);
+
+    zoomSdk.addEventListener('onAuthorized', async (event) => {
+      try {
+        await fetch('/api/auth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: event.code, state: event.state, verifier }),
+        });
+      } catch (e) {
+        console.warn('In-client token exchange failed', e);
+      }
+    });
+
+    try {
+      // If scopes are already authorized this is silent (no UI at all).
+      // If not, Zoom shows an in-client consent prompt — still inside
+      // this panel, never a separate window.
+      await zoomSdk.authorize({ state, codeChallenge: verifier });
+    } catch (e) {
+      console.warn('authorize() call failed', e);
+    }
+  }
+
   // ---- Zoom Apps SDK wiring, isolated so its failures never block the
   // UI above. Every early-exit path below just sets a status message. ----
   async function initZoom(){
@@ -223,6 +261,8 @@
           'onMessage',
           'expandApp',
           'showNotification',
+          'authorize',
+          'onAuthorized',
         ],
       });
     } catch (err) {
@@ -262,6 +302,13 @@
       return;
     }
     els.resetBtn.disabled = false;
+
+    // In-client OAuth: completes authorization inside this same meeting
+    // panel instead of Zoom opening a separate system-browser window (the
+    // "not attached to a meeting" duplicate window seen previously). This
+    // just satisfies the app's required OAuth scope — it isn't used for
+    // any of the timer's actual functionality.
+    initInClientAuth();
 
     try {
       await zoomSdk.connect();

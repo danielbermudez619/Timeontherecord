@@ -140,6 +140,48 @@ app.get('/auth', async (req, res) => {
   }
 });
 
+// In-client OAuth token exchange. Called from inside the meeting panel
+// (via initInClientAuth() -> onAuthorized in index.html) instead of the
+// external-browser deep-link flow above — this is what avoids Zoom
+// opening a separate, non-meeting-attached window for authorization.
+// Zoom's in-client flow only supports PKCE method "plain", so the
+// code_verifier sent here is the same string the client used as its
+// code_challenge — no redirect_uri is involved in this flow.
+app.post('/api/auth/token', async (req, res) => {
+  const { code, verifier } = req.body || {};
+  if (!code || !verifier) {
+    return res.status(400).json({ error: 'Missing code or verifier' });
+  }
+
+  try {
+    const tokenRes = await axios.post(
+      'https://zoom.us/oauth/token',
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        code_verifier: verifier,
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization:
+            'Basic ' +
+            Buffer.from(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`).toString(
+              'base64'
+            ),
+        },
+      }
+    );
+
+    req.session.accessToken = tokenRes.data.access_token;
+    req.session.refreshToken = tokenRes.data.refresh_token;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('In-client token exchange failed:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Token exchange failed' });
+  }
+});
+
 /* ------------------------------------------------------------------ */
 /* Shared recording-timer state, keyed by meeting UUID                 */
 /*                                                                      */
