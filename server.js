@@ -20,6 +20,7 @@ const {
   ZOOM_CLIENT_ID,
   ZOOM_CLIENT_SECRET,
   ZOOM_REDIRECT_URI, // e.g. https://your-ngrok-domain.ngrok-free.app/auth
+  ZOOM_WEBHOOK_SECRET_TOKEN, // "Secret Token" from App Credentials — used to verify deauthorization requests actually came from Zoom
 } = process.env;
 
 app.use(
@@ -31,7 +32,13 @@ app.use(
 );
 
 app.use(express.static('public'));
-app.use(express.json());
+// Capture the raw request body alongside the parsed JSON — Zoom's webhook
+// signature is computed over the exact bytes it sent, so re-serializing
+// req.body with JSON.stringify() later could produce a different string
+// (key order, whitespace) and fail verification even for a legitimate request.
+app.use(express.json({
+  verify: (req, res, buf) => { req.rawBody = buf.toString('utf8'); },
+}));
 
 function base64url(buf) {
   return buf
@@ -283,6 +290,73 @@ app.post('/api/timer/:uuid/event', (req, res) => {
 app.delete('/api/timer/:uuid', (req, res) => {
   timers.delete(req.params.uuid);
   res.json({ deleted: true });
+});
+
+/* ------------------------------------------------------------------ */
+/* Deauthorization endpoint                                            */
+/*                                                                       */
+/* Zoom calls this URL when a user removes/deauthorizes the app, so     */
+/* the app can delete any data it holds for that user. Zoom requires    */
+/* this endpoint for every published app, even ones that store little   */
+/* or no user-specific data.                                            */
+/* ------------------------------------------------------------------ */
+
+app.post('/api/deauthorize', (req, res) => {
+  const body = req.body || {};
+
+  // Zoom's one-time URL validation handshake. Zoom sends this
+  // automatically the first time you save this endpoint in the
+  // dashboard, to confirm you control the URL, before it will accept
+  // real deauthorization events here.
+  if (body.event === 'endpoint.url_validation') {
+    if (!ZOOM_WEBHOOK_SECRET_TOKEN) {
+      console.error('ZOOM_WEBHOOK_SECRET_TOKEN is not set — cannot complete URL validation.');
+      return res.status(500).json({ error: 'Server missing webhook secret token' });
+    }
+    const plainToken = body.payload && body.payload.plainToken;
+    const encryptedToken = crypto
+      .createHmac('sha256', ZOOM_WEBHOOK_SECRET_TOKEN)
+      .update(plainToken)
+      .digest('hex');
+    return res.json({ plainToken, encryptedToken });
+  }
+
+  // Verify this request actually came from Zoom before acting on it.
+  if (!ZOOM_WEBHOOK_SECRET_TOKEN) {
+    console.error('ZOOM_WEBHOOK_SECRET_TOKEN is not set — rejecting deauthorization request.');
+    return res.status(500).json({ error: 'Server missing webhook secret token' });
+  }
+  const timestamp = req.headers['x-zm-request-timestamp'];
+  const signature = req.headers['x-zm-signature'];
+  const message = `v0:${timestamp}:${req.rawBody}`;
+  const hash = crypto.createHmac('sha256', ZOOM_WEBHOOK_SECRET_TOKEN).update(message).digest('hex');
+  const expectedSignature = `v0=${hash}`;
+
+  if (signature !== expectedSignature) {
+    console.warn('Deauthorization request failed signature verification.');
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  if (body.event === 'app_deauthorized') {
+    const { account_id, user_id } = body.payload || {};
+
+    // Delete any data held for this user/account here. This app's only
+    // stored state is the in-memory per-meeting timer map (keyed by
+    // meeting UUID, not by user), so there is nothing user-linked to
+    // delete today. If user-linked storage is added later (e.g. saved
+    // tokens in a database), delete those records here.
+    console.log(`Deauthorization received — account: ${account_id}, user: ${user_id}`);
+
+    return res.json({
+      client_id: ZOOM_CLIENT_ID,
+      user_id,
+      account_id,
+      deauthorization_event_received: body.payload,
+      compliance_completed: true,
+    });
+  }
+
+  res.status(400).json({ error: 'Unhandled event type: ' + body.event });
 });
 
 app.listen(PORT, () => {
