@@ -31,6 +31,31 @@ app.use(
   })
 );
 
+// OWASP security headers Zoom requires on every page the app serves.
+// All scripts and styles live in external files under public/, so the
+// CSP needs no 'unsafe-inline'. frame-ancestors is deliberately not
+// restricted: the Zoom client embeds these pages.
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.set({
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'same-origin',
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self' https://appssdk.zoom.us",
+      "style-src 'self' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data:",
+      "connect-src 'self'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "object-src 'none'",
+    ].join('; '),
+  });
+  next();
+});
+
 app.use(express.static('public'));
 // Capture the raw request body alongside the parsed JSON — Zoom's webhook
 // signature is computed over the exact bytes it sent, so re-serializing
@@ -122,25 +147,7 @@ app.get('/auth', async (req, res) => {
     // would just create the confusing floating "not attached to a
     // meeting" duplicate. Close it instead; the docked panel in the
     // meeting is a separate, already-working instance.
-    res.send(`
-      <!DOCTYPE html>
-      <html><head><meta charset="UTF-8"><title>Authorized</title>
-      <style>
-        body{background:#14181C;color:#E7ECEF;font-family:Arial,sans-serif;
-             display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
-        p{font-size:14px;color:#8B9AA5;}
-      </style></head>
-      <body>
-        <p>Authorized. This window will close automatically…</p>
-        <script>
-          window.close();
-          // Some browsers block script-initiated close on windows they
-          // didn't open via script — if it's still here after a moment,
-          // at least the message above tells the person it's safe to
-          // close manually rather than looking broken.
-        </script>
-      </body></html>
-    `);
+    res.sendFile(__dirname + '/public/authorized.html');
   } catch (err) {
     console.error('Token exchange failed:', err.response?.data || err.message);
     res.status(500).send('OAuth token exchange failed. Check server logs.');
