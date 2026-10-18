@@ -9,19 +9,19 @@ Defines how security incidents affecting the App, its infrastructure, its secret
 
 A **security incident** is any confirmed or suspected event that compromises the confidentiality, integrity, or availability of the App or of data it processes. Examples:
 - leaked Zoom client secret or webhook secret token;
-- unauthorized access to the hosting or Zoom Marketplace account;
+- unauthorized access to the Zoom Marketplace or GitHub account;
 - an exploited vulnerability in the App or a dependency;
 - tampering with deployed code;
 - a sustained denial of service.
 
 ## 2. Roles
-The App owner is the incident lead and is responsible for every step below. Because the App is run by one person, the owner keeps this document and the contact list in §7 somewhere reachable even if the hosting account is unavailable.
+The App owner is the incident lead and is responsible for every step below. Because the App is run by one person, the owner keeps this document and the contact list in §7 somewhere reachable even if the server is unavailable.
 
 ## 3. Severity levels
 
 | Level | Definition | Examples | Response start |
 |---|---|---|---|
-| **SEV-1 Critical** | Active compromise, or exposure of secrets or user data | Client secret leaked publicly; hosting account taken over | Immediately, at most 4 hours |
+| **SEV-1 Critical** | Active compromise, or exposure of secrets or user data | Client secret leaked publicly; Zoom Marketplace or GitHub account taken over | Immediately, at most 4 hours |
 | **SEV-2 High** | Exploitable vulnerability with no evidence of exploitation yet; service down | Critical CVE in a dependency; app unreachable in meetings | Within 24 hours |
 | **SEV-3 Low** | Limited impact or theoretical risk | Low-severity scan finding; brief degradation | Within 5 business days (handled as a normal vulnerability) |
 
@@ -29,7 +29,7 @@ The App owner is the incident lead and is responsible for every step below. Beca
 
 ### 4.1 Detect and report
 Incidents may be detected through:
-- hosting provider alerts and logs;
+- server logs;
 - Zoom notifications;
 - scanner results;
 - dependency advisories;
@@ -42,14 +42,14 @@ The owner confirms whether an incident occurred, assigns a severity, and starts 
 
 ### 4.3 Contain
 Typical containment actions:
-- **Leaked or suspected-leaked secret:** regenerate the client secret and/or webhook secret token in the Zoom Marketplace, update the host's environment variables, and redeploy. Because the App stores no OAuth tokens, rotating the client secret is enough to cut off any misuse of App credentials.
-- **Compromised account:** change the password, revoke sessions and API keys, and re-check MFA.
+- **Leaked or suspected-leaked secret:** regenerate the client secret and/or webhook secret token in the Zoom Marketplace, update the server's `.env` file, and restart the server. Because the App stores no OAuth tokens, rotating the client secret is enough to cut off any misuse of App credentials.
+- **Compromised account:** change the password and revoke active sessions and API keys.
 - **Exploited code or dependency:** take the App offline or roll back to the last known-good release, then patch.
 
 ### 4.4 Eradicate and recover
 - Fix the root cause.
 - Run the full verification suite: SAST, SCA and DAST, per the [SSDLC](ssdlc.md).
-- Redeploy from a clean build (`npm ci`).
+- Reinstall dependencies from the lockfile (`npm ci`) and restart the server.
 - Confirm normal operation in a live Zoom meeting.
 
 ### 4.5 Notify
@@ -82,5 +82,4 @@ This plan is walked through as a tabletop exercise at least once a year, for exa
 |---|---|
 | App owner (incident lead) | danielbermudez6one9@gmail.com |
 | Zoom developer support | https://devsupport.zoom.us |
-| Hosting platform support | The support channel listed in the hosting platform's dashboard |
 | GitHub (repository compromise) | https://support.github.com |

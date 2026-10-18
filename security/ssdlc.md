@@ -50,8 +50,8 @@ Every release must pass the following. Results are saved to `security/evidence/`
 
 ### 2.5 Deployment and operations
 - Production is served over HTTPS only. HSTS is sent on every response.
-- The App runs on a managed cloud hosting platform (see the [Infrastructure and Dependency Management Policy](dependency-management.md) §2). Production secrets are set in that platform's encrypted environment-variable store, never in files or the repository.
-- Production is deployed from the `main` branch of the GitHub repository with `npm ci`, so exactly the locked dependency versions are installed.
+- Secrets are kept in a `.env` file on the server, which is excluded from version control and has never been committed.
+- Dependencies are installed from the committed lockfile, so exactly the locked versions run.
 - Server logs never include tokens, secrets, or request bodies containing personal data.
 
 ### 2.6 Maintenance
