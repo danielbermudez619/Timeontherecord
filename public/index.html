@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Recording Timer</title>
-<script src="https://appssdk.zoom.us/sdk.js"></script>
+<script type="module" src="zoom-sdk.js"></script>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -39,6 +39,8 @@
   <div class="notice" id="notice"></div>
   </div>
 
-<script src="app.js"></script>
+<!-- defer: module scripts are deferred too, and deferred scripts run in
+     document order, so zoom-sdk.js has set window.zoomSdk before this runs -->
+<script defer src="app.js"></script>
 </body>
 </html>

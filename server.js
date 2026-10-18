@@ -33,8 +33,9 @@ app.use(
 
 // OWASP security headers Zoom requires on every page the app serves.
 // All scripts and styles live in external files under public/, so the
-// CSP needs no 'unsafe-inline'. frame-ancestors is deliberately not
-// restricted: the Zoom client embeds these pages.
+// CSP needs no 'unsafe-inline'. frame-ancestors (which also covers
+// clickjacking — X-Frame-Options can't list more than one origin) allows
+// only this origin and Zoom, whose web client embeds the app in an iframe.
 app.disable('x-powered-by');
 app.use((req, res, next) => {
   res.set({
@@ -43,7 +44,7 @@ app.use((req, res, next) => {
     'Referrer-Policy': 'same-origin',
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' https://appssdk.zoom.us",
+      "script-src 'self'",
       "style-src 'self' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data:",
@@ -51,12 +52,22 @@ app.use((req, res, next) => {
       "base-uri 'self'",
       "form-action 'self'",
       "object-src 'none'",
+      "frame-ancestors 'self' https://*.zoom.us https://*.zoom.com",
     ].join('; '),
   });
   next();
 });
 
 app.use(express.static('public'));
+
+// Zoom Apps SDK, served from the version-pinned npm package rather than
+// Zoom's CDN, so no third-party script runs in the page and the SDK is
+// covered by npm audit.
+app.get('/vendor/zoom-appssdk.js', (req, res) => {
+  res.type('application/javascript');
+  res.sendFile(__dirname + '/node_modules/@zoom/appssdk/dist/sdk.es.js');
+});
+
 // Capture the raw request body alongside the parsed JSON — Zoom's webhook
 // signature is computed over the exact bytes it sent, so re-serializing
 // req.body with JSON.stringify() later could produce a different string
@@ -86,7 +97,7 @@ app.get('/', (req, res) => {
   // every open, not just the first. If we already completed OAuth this
   // session, don't kick off a fresh authorize redirect (that's what was
   // opening a second popup window every time) — just serve the panel.
-  if (req.session.accessToken) {
+  if (req.session.authorized) {
     return res.sendFile(__dirname + '/public/index.html');
   }
 
@@ -119,7 +130,7 @@ app.get('/auth', async (req, res) => {
   }
 
   try {
-    const tokenRes = await axios.post(
+    await axios.post(
       'https://zoom.us/oauth/token',
       new URLSearchParams({
         grant_type: 'authorization_code',
@@ -139,8 +150,10 @@ app.get('/auth', async (req, res) => {
       }
     );
 
-    req.session.accessToken = tokenRes.data.access_token;
-    req.session.refreshToken = tokenRes.data.refresh_token;
+    // The token exchange only completes Zoom's required authorization —
+    // no feature calls the Zoom API — so the tokens are discarded rather
+    // than kept in the (signed, but not encrypted) session cookie.
+    req.session.authorized = true;
 
     // This window's only job was completing authorization — it isn't the
     // meeting-attached app instance, so render the app here (as before)
@@ -168,7 +181,7 @@ app.post('/api/auth/token', async (req, res) => {
   }
 
   try {
-    const tokenRes = await axios.post(
+    await axios.post(
       'https://zoom.us/oauth/token',
       new URLSearchParams({
         grant_type: 'authorization_code',
@@ -187,8 +200,10 @@ app.post('/api/auth/token', async (req, res) => {
       }
     );
 
-    req.session.accessToken = tokenRes.data.access_token;
-    req.session.refreshToken = tokenRes.data.refresh_token;
+    // The token exchange only completes Zoom's required authorization —
+    // no feature calls the Zoom API — so the tokens are discarded rather
+    // than kept in the (signed, but not encrypted) session cookie.
+    req.session.authorized = true;
     res.json({ ok: true });
   } catch (err) {
     console.error('In-client token exchange failed:', err.response?.data || err.message);
@@ -364,6 +379,12 @@ app.post('/api/deauthorize', (req, res) => {
   }
 
   res.status(400).json({ error: 'Unhandled event type: ' + body.event });
+});
+
+// Explicit 404 so unknown paths keep the security headers above —
+// Express's built-in fallback replaces them with its own CSP.
+app.use((req, res) => {
+  res.status(404).type('text/plain').send('Not found');
 });
 
 app.listen(PORT, () => {

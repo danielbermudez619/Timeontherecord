@@ -1,0 +1,8 @@
+SAST scan — ESLint v10.8.1 + eslint-plugin-security v4.0.1
+Date: 2026-10-17 16:58 PDT
+Targets: server.js, eslint.config.js, public/**/*.js (public/app.js public/authorized.js public/zoom-sdk.js )
+Rules: see eslint.config.js (eslint-plugin-security rule set + no-eval, no-implied-eval, no-new-func, no-script-url)
+Command: npm run lint:security
+
+--- Output ---
+Exit code: 0 (0 = no errors and no warnings; empty output above = no findings)

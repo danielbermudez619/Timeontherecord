@@ -129,7 +129,7 @@
     const arr = new Uint8Array(len);
     crypto.getRandomValues(arr);
     let out = '';
-    for (let i = 0; i < len; i++) out += chars[arr[i] % chars.length];
+    for (const byte of arr) out += chars.charAt(byte % chars.length);
     return out;
   }
 
