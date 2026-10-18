@@ -53,7 +53,7 @@ Typical containment actions:
 - Confirm normal operation in a live Zoom meeting.
 
 ### 4.5 Notify
-- **Zoom:** for any SEV-1 incident, or any incident affecting Zoom users or Zoom credentials, notify Zoom through the Zoom App Marketplace developer support channel without undue delay, and **within 72 hours** of confirmation. **⚠ TODO:** confirm against the notification terms in your Zoom Marketplace developer agreement and use the shorter period if it differs.
+- **Zoom:** for any SEV-1 incident, or any incident affecting Zoom users or Zoom credentials, notify Zoom through the Zoom App Marketplace developer support channel without undue delay, and **within 72 hours** of confirmation, or sooner where the Zoom Marketplace developer terms require it.
 - **Affected users:** if personal data was affected, notify them without undue delay, and as required by applicable law (e.g. GDPR Art. 33/34, US state breach-notification laws), with:
   - what happened;
   - what data was involved;
@@ -81,5 +81,6 @@ This plan is walked through as a tabletop exercise at least once a year, for exa
 | Who | How |
 |---|---|
 | App owner (incident lead) | danielbermudez6one9@gmail.com |
-| Zoom developer support | Zoom App Marketplace → Help / developer support **⚠ TODO:** add the specific URL you use |
-| Hosting provider support | **⚠ TODO** |
+| Zoom developer support | https://devsupport.zoom.us |
+| Hosting platform support | The support channel listed in the hosting platform's dashboard |
+| GitHub (repository compromise) | https://support.github.com |

@@ -30,7 +30,7 @@ Evidence package for **Time on the record**, mapped to Zoom's security review re
 - As a compensating control, the client code was reviewed manually and is covered by SAST:
   - no URL or user input is written to the DOM as HTML (labels use `textContent`);
   - the CSP blocks inline and third-party script.
-- **⚠ TODO (optional):** update ZAP's "Selenium" add-on and re-run, so the DOM-XSS rule is included.
+- Planned: update ZAP's Selenium add-on and re-run with the DOM-XSS rule included.
 
 ## Findings fixed in this cycle
 
@@ -53,6 +53,9 @@ npm run security-check
 This runs SAST and `npm audit`. For DAST, see [ssdlc.md §4](ssdlc.md#4-reproducing-the-dast-scan).
 
 ## Before submitting
-1. Fill in every **⚠ TODO** in the policy documents. Each marks a fact (hosting provider, MFA, notification terms) that only you can confirm.
+1. Make sure the policies are true:
+   - MFA is on for your Zoom, GitHub and hosting accounts;
+   - Dependabot alerts are on for the GitHub repository;
+   - production runs on a cloud host, not this PC's Cloudflare tunnel.
 2. Run a DAST scan against your **production HTTPS URL** too, if you can. This report scanned a local instance, so it can't confirm production TLS settings.
 3. Export the Markdown files to PDF if the submission form requires PDFs.

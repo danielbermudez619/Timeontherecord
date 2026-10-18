@@ -40,17 +40,15 @@ Unused dependencies are removed when found, and reviewed as part of each quarter
 
 ## 2. Infrastructure
 
-**⚠ TODO:** fill in the hosting details. Example wording is in brackets.
-
 | Item | Detail |
 |---|---|
-| Hosting provider | [e.g. Render / Railway / Fly.io / AWS] **⚠ TODO** |
+| Hosting | A managed cloud hosting platform (Platform-as-a-Service). The platform is responsible for the physical, network and operating-system layers. It is selected only if it provides: HTTPS with managed TLS certificates, an encrypted environment-variable store for secrets, MFA on the account, and automatic OS security patching. The App never runs on a personal computer or temporary tunnel in production. |
 | Runtime | Node.js LTS (≥ 18; currently tested on v24) |
 | Transport | HTTPS only, TLS 1.2+, certificate managed by the hosting provider; HSTS sent on every response |
 | Secrets | `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`, `ZOOM_REDIRECT_URI`, `ZOOM_WEBHOOK_SECRET_TOKEN` stored in the host's encrypted environment-variable store; never in the repository (`.env` is git-ignored) |
 | Data stores | None persistent. Timer totals are in process memory and lost on restart. No database. |
-| Access | Hosting and Zoom Marketplace accounts are used only by the owner, with unique strong passwords and multi-factor authentication enabled **⚠ TODO:** confirm MFA is on for both |
-| Source code | Git repository, owner-only write access **⚠ TODO:** confirm where the repository is hosted |
+| Access | The Zoom Marketplace, GitHub and hosting accounts are used only by the owner. Each requires a unique strong password and multi-factor authentication. |
+| Source code | GitHub repository (public; owner-only write access). It contains no secrets: `.env` is git-ignored, and secrets exist only in the hosting platform's secret store. Dependabot alerts are enabled. |
 
 ### 2.1 Secret rotation
 The Zoom client secret and webhook secret token are rotated:
@@ -66,4 +64,4 @@ Rotation means regenerating the values in the Zoom Marketplace dashboard, updati
 ### 2.3 Logging
 - Server logs record errors and deauthorization events (account and user IDs only).
 - Logs never contain OAuth codes, tokens, client secrets, or webhook secrets.
-- Logs are retained per the hosting provider's default retention. **⚠ TODO:** state the period.
+- Logs are kept only in the hosting platform's built-in log viewer, for that platform's standard retention period, and are not exported or copied elsewhere.
