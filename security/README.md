@@ -11,6 +11,7 @@ Evidence package for **Time on the record**, mapped to Zoom's security review re
 | Policy 1 of 3: Vulnerability management procedures | [vulnerability-management.md](vulnerability-management.md) |
 | Policy 2 of 3: Infrastructure/dependency management policy | [dependency-management.md](dependency-management.md) |
 | Policy 3 of 3: Incident management and response policy | [incident-response.md](incident-response.md) |
+| Reviewer test plan | [test-plan.md](test-plan.md) (plain-text version for the form field: [test-plan.txt](test-plan.txt)) |
 | Supporting: dependency scan (SCA) | [evidence/sca-npm-audit.txt](evidence/sca-npm-audit.txt), with the pre-fix result in [evidence/sca-npm-audit-before-remediation.txt](evidence/sca-npm-audit-before-remediation.txt) |
 
 ## Current results (2026-10-17)

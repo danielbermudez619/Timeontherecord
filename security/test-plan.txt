@@ -1,0 +1,24 @@
+TIME ON THE RECORD: REVIEWER TEST PLAN
+
+LOGIN: The app has no separate login. It runs inside the Zoom client and authorizes only through Zoom OAuth, so there are no test credentials. Use your own Zoom account.
+
+REQUIREMENTS: A Zoom account with cloud recording enabled (Settings > Recording > Cloud recording). The app detects cloud recording only, not local recording. Use a recent Zoom desktop client.
+
+INSTALL: Open the Production install link, sign in, and click Allow. Any authorization window closes by itself.
+
+TEST STEPS:
+1. Outside a meeting, open the app from the Apps tab. Expected: "This window isn't attached to a meeting" message.
+2. Start a meeting. Click Apps in the meeting toolbar and launch Time on the record. Expected: status "Not recording", timer 00:00:00.
+3. Record > Record to the Cloud. Expected: status "Recording", and the timer counts up.
+4. While recording, type a marker label and click Log. Expected: the marker is listed with the elapsed time.
+5. Pause recording. Expected: "Recording paused", and the timer stops.
+6. Resume recording. Expected: the timer continues from the paused value.
+7. Stop recording. Expected: "Not recording", the total is kept, and a "Recording stopped" notification shows the total time.
+8. (Optional) A second participant opens the app in the same meeting. Expected: both see the same total within about 4 seconds.
+9. With recording stopped, click "Reset total (everyone)". Expected: the timer returns to 00:00:00 for everyone.
+10. End the meeting and start a new one, then open the app. Expected: the timer starts at 00:00:00.
+11. Remove the app (Marketplace > Manage > Added Apps > Remove). Expected: the app is removed. No user-linked data is stored.
+
+DATA: Only the meeting UUID and recording-time totals are kept, in server memory. OAuth tokens, profiles, meeting content and marker text are not stored.
+
+CONTACT: danielbermudez6one9@gmail.com
