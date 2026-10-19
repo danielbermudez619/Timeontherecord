@@ -42,18 +42,19 @@ Unused dependencies are removed when found, and reviewed as part of each quarter
 | Item | Detail |
 |---|---|
 | Runtime | Node.js LTS (≥ 18; currently tested on v24) |
-| Transport | HTTPS only, through Cloudflare, which manages the TLS certificate; HSTS sent on every response |
-| Secrets | `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`, `ZOOM_REDIRECT_URI`, `ZOOM_WEBHOOK_SECRET_TOKEN` stored in a `.env` file on the server; never in the repository (`.env` is git-ignored and has never been committed) |
+| Hosting | Render (render.com) web service at `timeontherecord.onrender.com`, deployed automatically from the `main` branch on GitHub. Render manages the underlying servers and operating system. |
+| Transport | HTTPS only, with the TLS certificate managed by Render; HSTS sent on every response |
+| Secrets | `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`, `ZOOM_REDIRECT_URI`, `ZOOM_WEBHOOK_SECRET_TOKEN` stored in Render's environment-variable settings; never in the repository (the local development `.env` file is git-ignored and has never been committed) |
 | Data stores | None persistent. Timer totals are in process memory and lost on restart. No database. |
-| Access | The Zoom Marketplace and GitHub accounts are used only by the owner. |
-| Source code | GitHub repository (public; owner-only write access). It contains no secrets: `.env` is git-ignored, and secrets exist only on the server. |
+| Access | The Zoom Marketplace, GitHub and Render accounts are used only by the owner. |
+| Source code | GitHub repository (public; owner-only write access). It contains no secrets: `.env` is git-ignored, and production secrets exist only in Render's environment settings. |
 
 ### 2.1 Secret rotation
 The Zoom client secret and webhook secret token are rotated:
 - immediately if exposure is suspected (see the [Incident Management and Response Policy](incident-response.md));
 - otherwise at least every 12 months.
 
-Rotation means regenerating the values in the Zoom Marketplace dashboard, updating the server's `.env` file, and restarting the server.
+Rotation means regenerating the values in the Zoom Marketplace dashboard, updating them in Render's environment settings, and redeploying.
 
 ### 2.2 Runtime patching
 - The Node.js runtime stays on a supported LTS release. Security releases are applied within the vulnerability-management timelines.
@@ -61,4 +62,4 @@ Rotation means regenerating the values in the Zoom Marketplace dashboard, updati
 ### 2.3 Logging
 - Server logs record errors and deauthorization events (account and user IDs only).
 - Logs never contain OAuth codes, tokens, client secrets, or webhook secrets.
-- Logs are written to the server console only. They are not saved to files or exported elsewhere.
+- Logs are written to the server console, which Render shows in its dashboard log viewer. They are not exported or copied elsewhere.

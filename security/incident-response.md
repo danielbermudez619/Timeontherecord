@@ -42,14 +42,14 @@ The owner confirms whether an incident occurred, assigns a severity, and starts 
 
 ### 4.3 Contain
 Typical containment actions:
-- **Leaked or suspected-leaked secret:** regenerate the client secret and/or webhook secret token in the Zoom Marketplace, update the server's `.env` file, and restart the server. Because the App stores no OAuth tokens, rotating the client secret is enough to cut off any misuse of App credentials.
+- **Leaked or suspected-leaked secret:** regenerate the client secret and/or webhook secret token in the Zoom Marketplace, update them in Render's environment settings, and redeploy. Because the App stores no OAuth tokens, rotating the client secret is enough to cut off any misuse of App credentials.
 - **Compromised account:** change the password and revoke active sessions and API keys.
 - **Exploited code or dependency:** take the App offline or roll back to the last known-good release, then patch.
 
 ### 4.4 Eradicate and recover
 - Fix the root cause.
 - Run the full verification suite: SAST, SCA and DAST, per the [SSDLC](ssdlc.md).
-- Reinstall dependencies from the lockfile (`npm ci`) and restart the server.
+- Redeploy on Render from the fixed commit on `main`.
 - Confirm normal operation in a live Zoom meeting.
 
 ### 4.5 Notify

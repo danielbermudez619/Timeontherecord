@@ -50,8 +50,8 @@ Every release must pass the following. Results are saved to `security/evidence/`
 
 ### 2.5 Deployment and operations
 - Production is served over HTTPS only. HSTS is sent on every response.
-- Secrets are kept in a `.env` file on the server, which is excluded from version control and has never been committed.
-- Dependencies are installed from the committed lockfile, so exactly the locked versions run.
+- Production runs on Render (render.com), which provides HTTPS. Render deploys automatically from the `main` branch of the GitHub repository, so every release is a reviewed, committed version.
+- Production secrets are set in Render's environment-variable settings, never in files or the repository.
 - Server logs never include tokens, secrets, or request bodies containing personal data.
 
 ### 2.6 Maintenance
